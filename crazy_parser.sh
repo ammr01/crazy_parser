@@ -222,6 +222,8 @@ Technique"
     rm $tmp3
     rm $tmp4
     rm $tmp5
+    rm $tmp6
+    
  
 }
 
