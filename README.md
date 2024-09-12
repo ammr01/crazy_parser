@@ -5,11 +5,6 @@
 **Crazy Parser** is a Bash script designed to parse CrowdStrike detection JSON files into csv output. It extracts relevant fields from the detection data, including details about detected threats, command lines, filenames, and quarantine information. The script utilizes the `jq` tool for efficient JSON parsing and provides detailed error handling for robust execution.
 
 
-## Features
-- Custom error handling with support for notes, warnings, and errors.
-- Conversion of multiline strings into arrays for easier processing.
-- Efficient parsing of json using `jq`.
-
 ## Requirements
 - **jq**: A command-line JSON processor required for JSON parsing. Install it using:
   ```bash
