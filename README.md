@@ -1,6 +1,3 @@
-Here’s an updated version of the README with the correct context:
-
----
 
 # Crazy Parser Project - README
 
