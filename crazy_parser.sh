@@ -4,28 +4,7 @@
 # Date : 09-Sep-2024
 # Project Name : crazy_parser
 
-# License: MIT License
-# 
-# Copyright (c) 2024 Amro Alasmer
-# 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-# 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-# 
+
 
 error_flag=0
 default_error_code=1
@@ -224,11 +203,11 @@ Technique"
         echo "" > $tmp5
         echo "" > $tmp6
 
-        jq ".[$x] | .$query_fields" "$datafile"  > $tmp 2>/dev/null || err "cannot read from file \"$datafile\"" 3 1 77 || return $?
+        jq ".[$x] | .$query_fields" "$datafile"  > $tmp 2>/dev/null || err "jq query error!" 3 1 77 || return $?
         convert_to_arrayln_O "$(cat $tmp)"
         print_list list[@] ","
         echo -n ","
-        jq --argjson x $x '.[$x] | with_entries(select(.key | test("QuarantineFiles\\[\\d\\].ImageFileName$|DocumentsAccessed\\[\\d\\].FileName$|DocumentsAccessed\\[\\d\\].FilePath$|ExecutablesWritten\\[\\d\\].FilePath$"))) ' "$datafile"   > $tmp1 2>/dev/null || err "cannot read from file \"$datafile\"" 3 0 78
+        jq --argjson x $x '.[$x] | with_entries(select(.key | test("QuarantineFiles\\[\\d+\\].ImageFileName$|DocumentsAccessed\\[\\d+\\].FileName$|DocumentsAccessed\\[\\d+\\].FilePath$|ExecutablesWritten\\[\\d+\\].FilePath$"))) ' "$datafile"   > $tmp1 2>/dev/null || err "jq query error!" 3 0 77
         convert_to_arrayln_O "$(cat $tmp1)"
         print_list list[@] "\n" | awk -F '": "'  -v tmp6=$tmp6 -v tmp3=$tmp3 -v tmp4=$tmp4  -v tmp5=$tmp5 '$1 ~ /"QuarantineFiles\[[0-9]+\]\.ImageFileName/ {print "\"" $2 > tmp6 }  $1 ~ /"DocumentsAccessed\[[0-9]+\]\.FileName/ {print "\"" $2 > tmp3 } $1 ~ /"DocumentsAccessed\[[0-9]+\]\.FilePath/ {print "\"" $2 > tmp4 } $1 ~ /"ExecutablesWritten\[[0-9]+\]\.FilePath/ {print "\"" $2 > tmp5 }' 
         # print_list list[@] "\n" | awk -F '": "'  '  $1 ~ /"DocumentsAccessed\[\d\]\.FileName/ {print "\"" $2 } $1 ~ /"DocumentsAccessed\[\d\]\.FilePath/ {print "\"" $2 } $1 ~ /"ExecutablesWritten\[\d\]\.FilePath/ {print "\"" $2  }' 
