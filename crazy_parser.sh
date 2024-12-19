@@ -75,7 +75,7 @@ err(){
     #      if not numeric or not set, the default 
     #      value will be used. 
     
-    if [ $error_flag -eq $__ERROR_MESSAGE_ENABLE ]; then 
+    if [ $error_flag -ne $__ERROR_MESSAGE_ENABLE ]; then 
         return $__SUCESS
     fi
 
