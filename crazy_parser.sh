@@ -4,6 +4,7 @@
 # Date : 09-Sep-2024
 # Project Name : crazy_parser
 
+
 # License: MIT License
 # 
 # Copyright (c) 2024 Amro Alasmer
@@ -27,17 +28,35 @@
 # SOFTWARE.
 # 
 
-error_flag=0
-default_error_code=1
 
 
+readonly __NOTE=1
+readonly __WARN=2
+readonly __WARNING=$__WARN
+readonly __ERROR=3
+readonly __EXIT=0
+readonly __RETURN=1
+readonly __NOTHING=2
+readonly __STDOUT=1
+readonly __STDERR=2
+readonly __ERROR_MESSAGE_ENABLE=0
+readonly __ERROR_MESSAGE_DISABLE=1
+readonly __SUCESS=0
+readonly default_error_code=1
+
+
+error_flag=$__ERROR_MESSAGE_ENABLE
 err(){
     # err [message] <type> <isexit> <exit/return code>
+    #
     #   I- message (mandatory): text to print
-    #  II- type (optional "default is (note)"): 
-    #      1 : note
+    #
+    #  II- type (optional "default is (1/note)"): 
+    #      1 : note (Default)
     #      2 : warning
-    #      3 : error (needs two more arguments)
+    #      3 : error: the text is printed into stderr, and it needs two more arguments
+    #
+    #
     # III- isexit (optional "default is 1"):
     #      0 : exit after printing 
     #          (set exit code in the next
@@ -50,57 +69,60 @@ err(){
     #           is used if return code
     #           is not set).
     #      2 : do not exit or return
+    #
     #  IV- error/return code : 
     #      to set error/return code, must be numeric, 
     #      if not numeric or not set, the default 
     #      value will be used. 
     
+    if [ $error_flag -eq $__ERROR_MESSAGE_ENABLE ]; then 
+        return $__SUCESS
+    fi
+
     local text="$1"
     local type=${2-1}
     local isexit=${3-1}
     local error_code=${4-$default_error_code}
     local typestr=""
     local fd=1
-    
+
     if ! [[ "$type" =~ ^[0-9]+$ ]]; then
-        type=1
+        type=$__NOTE
     fi
 
     if ! [[ "$isexit" =~ ^[0-9]+$ ]]; then
-        isexit=1
+        isexit=$__RETURN
     fi
 
     if ! [[ "$error_code" =~ ^[0-9]+$ ]]; then
         error_code=$default_error_code
     fi
     case $type in 
-    1)
+    $__NOTE)
         typestr="NOTE"
-        fd=1 #stdout
+        fd=$__STDOUT
     ;;
-    2)
+    $__WARN)
         typestr="WARNING"
-        fd=1 #stdout
+        fd=$__STDOUT
     ;; 
-    3)
+    $__ERROR)
         typestr="ERROR"
-        fd=2 #stderr
+        fd=$__STDERR
     ;;
     *)
         typestr="NOTE"
-        fd=1 #stdout
+        fd=$__STDOUT
     ;;
     esac
     
-    if [ $error_flag -eq 0 ]; then 
-        >&$fd echo -e "[$typestr:START]\n$text\n[$typestr:END]"
-        if [ "$isexit" -eq 0 ]; then
-            exit "$error_code"
-        elif [ "$isexit" -eq 1 ]; then
-            return "$error_code"
-        fi
-
+    >&$fd echo -e "[$typestr:START]\n$text\n[$typestr:END]"
+    if [ "$isexit" -eq $__EXIT ]; then
+        exit "$error_code"
+    elif [ "$isexit" -eq $__RETURN ]; then
+        return "$error_code"
     fi
+
     
 }
 
@@ -174,10 +196,10 @@ PatternDispositionDescription
 SeverityName
 Tactic
 Technique
-QuarantineFiles[x].ImageFileName
-DocumentsAccessed[x].FileName
-DocumentsAccessed[x].FilePath
-ExecutablesWritten[x].FilePath"
+QuarantineFiles{}.ImageFileName
+DocumentsAccessed{}.FileName
+DocumentsAccessed{}.FilePath
+ExecutablesWritten{}.FilePath"
 
 local fields="DetectId
 CommandLine
@@ -226,6 +248,7 @@ Technique"
 
         jq ".[$x] | .$query_fields" "$datafile"  > $tmp 2>/dev/null || err "jq query error!" 3 1 77 || return $?
         convert_to_arrayln_O "$(cat $tmp)"
+        # csv_double_qoutes_escape
         print_list list[@] ","
         echo -n ","
         jq --argjson x $x '.[$x] | with_entries(select(.key | test("QuarantineFiles\\[\\d+\\].ImageFileName$|DocumentsAccessed\\[\\d+\\].FileName$|DocumentsAccessed\\[\\d+\\].FilePath$|ExecutablesWritten\\[\\d+\\].FilePath$"))) ' "$datafile"   > $tmp1 2>/dev/null || err "jq query error!" 3 0 77
@@ -264,6 +287,12 @@ json_array_length=`jq length "$datafile"`
 tmp1=`mktemp`
 
 parseall > $tmp1 || err "parseall error" 3 0 $?
+
+
+sed -i 's/\\",/\\ ",/g' "$tmp1"
+sed -i 's/\\"/""/g' "$tmp1"
+
+
 cat $tmp1
 
 
